@@ -1,0 +1,119 @@
+--SELECT 
+	--i.InvoiceId AS Invoice_No,
+	--i.Total AS Invoice_Total,
+	--i.BillingCity AS City,
+	--i.BillingState AS State,
+	--i.BillingCountry AS Country
+--FROM 
+	--Invoice i
+--WHERE 
+	--i.BillingCountry ='USA' OR i.BillingCountry ='Canada';
+
+----------------------------------------
+--Q1--How many customers made purchases?
+----------------------------------------
+
+--Pulled 59 unique customers
+--SELECT DISTINCT 
+	--COUNT(c.CustomerID) AS ClientCounts
+--FROM
+	--Customer c;
+
+--concatenating firstname and last name
+--SELECT
+	--c.CustomerID AS ID_No,
+	--c.FirstName ||' '|| c.LastName AS CustomerName,
+	--c.Company AS Company 
+--FROM
+	--Customer c;
+
+--59 distinct customers with total invoice volume = 412 invoices
+--SELECT 
+	--i.CustomerID AS CustID,
+	--c.FirstName ||' '|| c.LastName AS CustomerName,
+	--COUNT(i.InvoiceId) AS InvoiceVolume,
+	--SUM(il.UnitPrice * il.Quantity) AS BilledAmount
+--FROM
+	--Invoice i JOIN Customer c ON i.CustomerId = c.CustomerId 
+		--JOIN InvoiceLine il ON i.InvoiceId = il.InvoiceId 
+--WHERE 
+	--CustomerName = 'Mark Philips'
+--GROUP BY
+	--CustID
+--ORDER BY
+	--CustID ASC;
+
+----SELECT 
+	----c.FirstName ||' '|| c.LastName AS CustomerName,
+	----i.InvoiceId AS InvoiceNumber,
+	----il.UnitPrice AS TrackPrice,
+	----il.Quantity AS Quantity,
+	----il.UnitPrice * il.Quantity AS BilledAmount,
+	----SUM(il.UnitPrice * il.Quantity) AS InvoiceAmount 
+----FROM 
+	----Invoice i JOIN Customer c ON i.CustomerId = c.CustomerId 
+	----JOIN InvoiceLine il ON i.InvoiceId = il.InvoiceId 
+--WHERE 
+	--CustomerName = 'Helena Holý' --OR CustomerName = 'Richard Cunningham' OR CustomerName = 'Luis Rojas'
+		--AND InvoiceNumber IN (46,175,198,220,272,393,404)
+----GROUP BY 
+	----CustomerName
+	--InvoiceNumber;
+----ORDER BY 
+	--InvoiceNumber ASC;
+	----InvoiceAmount DESC
+----LIMIT 3;
+----------------------------------------------------------
+--Q2--Who are the top 3 customers with the most purchases?
+----------------------------------------------------------
+
+---SELECT 
+	---i.CustomerID AS CustID,
+	---c.FirstName ||' '|| c.LastName AS CustomerName,
+	---COUNT(InvoiceId) AS InvoiceVolume
+---FROM
+	---Invoice i JOIN Customer c ON i.CustomerId = c.CustomerId 
+---GROUP BY
+	---CustID
+---ORDER BY
+	---CustID ASC;
+
+------SELECT 
+	------c.FirstName ||' '|| c.LastName AS CustomerName,
+	------SUM(il.UnitPrice * il.Quantity) AS TotalPurchases
+------FROM 
+	------Invoice i JOIN Customer c ON i.CustomerId = c.CustomerId 
+	------JOIN InvoiceLine il ON i.InvoiceId = il.InvoiceId 
+------GROUP BY 
+------CustomerName
+------ORDER BY 
+	------TotalPurchases DESC
+------LIMIT 3;
+
+
+
+
+----------------------------------------------
+--Q3--Which customers haven't bought anything?
+----------------------------------------------
+
+---At this time, there does not appear to be any customers on file who have bought nothing
+SELECT 
+	i.CustomerID AS CustID,
+	c.FirstName ||' '|| c.LastName AS CustomerName,
+	--i.Total AS InvoiceTotal
+	COUNT(DISTINCT i.InvoiceId) AS InvoiceVolume,
+	SUM(il.UnitPrice * il.Quantity) AS BilledAmount
+FROM
+	Invoice i FULL JOIN Customer c ON i.CustomerId = c.CustomerId 
+		FULL JOIN InvoiceLine il ON i.InvoiceId = il.InvoiceId
+--WHERE 
+	--CustomerName = 'Helena Holý'
+GROUP BY
+	CustomerName
+HAVING
+	BilledAmount <=0
+	OR BilledAmount ISNULL 
+ORDER BY
+	CustID ASC;
+

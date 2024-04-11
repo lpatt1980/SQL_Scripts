@@ -1,0 +1,64 @@
+SELECT 
+	i.BillingCountry AS Country,
+	COUNT(DISTINCT i.InvoiceId) AS Invoice_Volume,
+	SUM(il.UnitPrice * il.Quantity) AS Total_Sales
+FROM 
+	Invoice i JOIN InvoiceLine il ON i.InvoiceId = il.InvoiceId  
+GROUP BY
+	Country
+ORDER BY
+	Invoice_Volume DESC;
+
+SELECT 
+	i.BillingCountry AS Country,
+	i.BillingCity AS City,
+	SUM(il.UnitPrice * il.Quantity) AS Total_Sales
+FROM 
+	Invoice i INNER JOIN InvoiceLine il ON i.InvoiceId = il.InvoiceId
+WHERE 
+	Country IN('USA','Canada','France')
+	AND City IN('Mountain View','Paris','Fort Worth','Dijon','Montréal','Vancouver')
+GROUP BY
+	City
+ORDER BY
+	Country ASC
+LIMIT 15;
+
+
+
+SELECT 
+	i.BillingCountry AS Country,
+	COUNT(DISTINCT i.InvoiceId) AS Invoice_Cts,
+	COUNT(DISTINCT i.CustomerId) AS Customer_Cts,
+	SUM(il.UnitPrice * il.Quantity) AS Sales_Total,
+	SUM(i.Total) AS Aggregate_Total 
+FROM
+	Invoice i JOIN InvoiceLine il ON i.InvoiceId = il.InvoiceId
+GROUP BY
+	Country
+HAVING 
+	Customer_Cts < 2
+		AND Sales_Total < 38.00
+ORDER BY
+	Sales_Total DESC;
+
+
+#######################################################################
+SELECT 
+	i.InvoiceId AS Invoice_No,
+	i.BillingCountry AS Country,
+	i.CustomerId AS CustID,
+	il.UnitPrice AS Track_Price,
+	il.Quantity AS Purchase_Qty,
+	il.UnitPrice * il.Quantity AS Order_Price,
+	SUM(il.UnitPrice * il.Quantity) AS Invoice_Total_Revised,
+	i.Total AS Invoice_Total 
+FROM
+	Invoice i JOIN InvoiceLine il ON i.InvoiceId = il.InvoiceId 
+WHEREH
+	Country IN('Argentina')
+GROUP BY
+	Invoice_No
+ORDER BY
+	Invoice_No ASC;
+########################################################################

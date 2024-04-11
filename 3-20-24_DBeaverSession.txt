@@ -1,0 +1,310 @@
+# 3-20-2024 #
+
+----------------
+DBeaver_Training
+----------------
+
+SELECT
+	CustomerId AS CustID,
+	InvoiceId AS Invoice_No,
+	BillingCountry AS Country,
+	Total AS Amount
+FROM
+	Invoice AS I
+WHERE
+	Country = 'USA'
+		AND 
+	CustID = 23;
+
+
+
+SELECT 
+	*
+FROM 
+	Customer
+WHERE
+	Country LIKE 'C%'OR Country LIKE 'A%'OR Country LIKE 'B%';
+
+#####
+-----
+JOINs
+-----
+#####
+
+SELECT 
+	*
+FROM 
+	Customer C JOIN Invoice I 
+		ON C.CustomerId = I.CustomerId
+WHERE
+	Country LIKE 'C%'OR Country LIKE 'A%'OR Country LIKE 'B%';
+
+
+
+SELECT 
+	*
+FROM 
+	Customer C JOIN Invoice I 
+		ON C.CustomerId = I.CustomerId
+WHERE
+	Country LIKE 'A%'OR Country LIKE 'B%';
+
+
+--------------
+SUMMATIVE_DATA
+--------------
+
+SELECT DISTINCT
+	BillingCountry AS Country,
+	COUNT(InvoiceID) AS Total_Invoices
+FROM 
+	Invoice
+GROUP BY
+	Country
+ORDER BY
+	Country ASC;
+
+
+
+------------
+JOINs contd.
+------------
+
+Multiple TBL JOIN
+
+SELECT
+	AR.Name AS Artist,
+	T.Name AS TrackName,
+	AL.Title AS AlbumTitle
+FROM
+	((Album AL INNER JOIN Track T ON AL.AlbumId = T.AlbumId)
+		INNER JOIN Artist AR ON AL.ArtistId = AR.ArtistID)
+WHERE
+	TrackName Like 'A%';
+
+
+
+SELECT
+	A.AlbumId, A.Title, A.ArtistId, a2.Name,t.Name, t.TrackId, SUM(il.quantity) as TrkQty
+FROM
+	(((Album A JOIN Artist a2 ON a2.ArtistId = a.ArtistId)
+		JOIN Track t ON t.AlbumId = a.AlbumId)
+		JOIN InvoiceLine il ON il.TrackId = tTrackId)
+GROUP BY
+	a2.Name;
+
+
+
+SELECT
+	AR.Name AS Artist,
+	T.Name AS TrackName,
+	AL.Title AS AlbumTitle
+FROM
+	((Album AL INNER JOIN Track T ON AL.AlbumId = T.AlbumId)
+		INNER JOIN Artist AR ON AL.ArtistId = AR.ArtistID)
+WHERE
+	TrackName Like 'A%';
+
+
+
+SuperDuper_Version
+------------------
+
+
+SELECT 
+	p.Name AS Genre,
+	SUM(il.UnitPrice*il.Quantity) AS Total_Sales
+FROM
+	Playlist p JOIN PlaylistTrack pt ON p.PlaylistId = pt.PlaylistId
+			JOIN Track T ON T.TrackId = pt.TrackId 
+			JOIN InvoiceLine il ON T.TrackId = Il.TrackId 
+			JOIN Invoice i On il.InvoiceId = i.InvoiceId 
+GROUP BY
+	Genre
+ORDER BY
+	Total_Sales DESC
+LIMIT 10;
+
+
+--SELECT 
+	--p.Name AS Genre,
+	--SUM(il.UnitPrice*il.Quantity) AS Total_Sales
+--FROM
+	--Playlist p JOIN PlaylistTrack pt ON p.PlaylistId = pt.PlaylistId
+			--JOIN Track T ON T.TrackId = pt.TrackId 
+			--JOIN InvoiceLine il ON T.TrackId = Il.TrackId 
+			--JOIN Invoice i On il.InvoiceId = i.InvoiceId 
+--GROUP BY
+	--Genre
+--ORDER BY
+	--Total_Sales DESC
+--LIMIT 10;
+
+
+SELECT DISTINCT 
+	il.UnitPrice AS Price
+FROM
+	InvoiceLine il;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------------
+SELECT 
+	p.PlaylistId, t.Name
+FROM 
+	Track t JOIN Playlist p 
+		ON t.TrackId  = p.PlaylistId
+WHERE
+	t.Name LIKE 'B%';
+
+SELECT 
+	t.Name as TrackName, 
+	P.Name AS PlaylistName
+FROM  Track t LEFT JOIN PlaylistTrack pt ON t.TrackId = pt.TrackId 
+		INNER JOIN Playlist p ON p.PlaylistId = pt.PlaylistId;
+
+
+SELECT 
+	Title, name
+FROM
+	Album A RIGHT JOIN Artist ON A.ArtistId = A.ArtistId 
+WHERE 
+	Title ISNULL AND name LIKE 'r%'
+ORDER BY Name;
+
+
+
+SELECT 
+	Title, name
+FROM
+	Album A LEFT JOIN Artist ON A.ArtistId = A.ArtistId 
+WHERE 
+	Title ISNULL AND name LIKE 'r%'
+ORDER BY Name;
+
+
+
+
+SELECT 
+	*
+FROM
+	Album AL RIGHT JOIN Artist AR ON AR.ArtistId = AL.ArtistId 
+WHERE 
+	AlbumId ISNULL
+ORDER BY 
+	Name;
+
+
+
+
+--SELECT 
+	--p.Name AS Genre,
+	--SUM(il.UnitPrice*il.Quantity) AS Total_Sales
+--FROM
+	--Playlist p JOIN PlaylistTrack pt ON p.PlaylistId = pt.PlaylistId
+			--JOIN Track T ON T.TrackId = pt.TrackId 
+			--JOIN InvoiceLine il ON T.TrackId = Il.TrackId 
+			--JOIN Invoice i On il.InvoiceId = i.InvoiceId 
+--GROUP BY
+	--Genre
+--ORDER BY
+	--Total_Sales DESC
+--LIMIT 10;
+
+
+DBeaver_Q5
+---------
+
+
+--SELECT 
+	--COUNT(*)*SUM(il.UnitPrice) AS Total_Spend,
+	--i.BillingCity AS City,
+	--i.BillingCountry AS Country
+--FROM 
+	--InvoiceLine il JOIN	Invoice i ON il.InvoiceId =i.InvoiceId
+--GROUP BY
+	--Country 
+--ORDER BY 
+	--Total_Spend DESC
+--LIMIT 2;
+
+
+
+
+SELECT
+	il.InvoiceId AS PO_NUM,
+	il.UnitPrice AS Price,
+	il.Quantity AS QTY,
+	COUNT(*) AS Total_Sales,
+	i.BillingCity AS City,
+	i.BillingCountry AS Country
+FROM 
+	InvoiceLine il JOIN	Invoice i ON il.InvoiceId =i.InvoiceId
+WHERE 
+	Country = 'USA'
+GROUP BY
+	City
+ORDER BY 
+	Total_Sales DESC
+LIMIT 10;
+	
+
+SELECT
+	COUNT(*)*SUM(il.UnitPrice) AS Total_Spend,
+	i.BillingCity AS City,
+	i.BillingCountry AS Country
+FROM 
+	InvoiceLine il JOIN	Invoice i ON il.InvoiceId =i.InvoiceId
+WHERE 
+	Country = 'USA' OR Country = 'Canada'
+GROUP BY
+	City
+ORDER BY 
+	Total_Spend DESC
+LIMIT 10;
+
+
+SELECT
+	i.BillingCity AS City,
+	i.BillingCountry AS Country,
+	SUM(i.Total) AS GrandTotal
+FROM
+	Invoice i 
+WHERE
+	Country = 'USA'
+GROUP BY
+	City
+ORDER BY City;
+
+
+SELECT
+	i.BillingCity AS City,
+	i.BillingCountry AS Country,
+	SUM(i.Total) AS GrandTotal
+FROM
+	Invoice i 
+WHERE
+	Country = 'USA' AND City = 'Mountain View'
+GROUP BY
+	City
+ORDER BY City;
+
+
+SELECT
+	i.BillingCity AS City,
+	i.BillingCountry AS Country,
+	SUM(i.Total) AS GrandTotal
+FROM
+	Invoice i 
+
