@@ -1,0 +1,650 @@
+-----------------------
+--DBeaver SQL Scripts--
+-----------------------
+
+--SELECT 
+	--i.InvoiceId AS Invoice_No,
+	--i.Total AS Invoice_Total,
+	--i.BillingCity AS City,
+	--i.BillingState AS State,
+	--i.BillingCountry AS Country
+--FROM 
+	--Invoice i
+--WHERE 
+	--i.BillingCountry ='USA' OR i.BillingCountry ='Canada';
+
+----------------------------------------
+--Q1--How many customers made purchases?
+----------------------------------------
+
+--Pulled 59 unique customers
+--SELECT DISTINCT 
+	--COUNT(c.CustomerID) AS ClientCounts
+--FROM
+	--Customer c;
+
+--concatenating firstname and last name
+--SELECT
+	--c.CustomerID AS ID_No,
+	--c.FirstName ||' '|| c.LastName AS CustomerName,
+	--c.Company AS Company 
+--FROM
+	--Customer c;
+
+--59 distinct customers with total invoice volume = 412 invoices
+--SELECT 
+	--i.CustomerID AS CustID,
+	--c.FirstName ||' '|| c.LastName AS CustomerName,
+	--COUNT(i.InvoiceId) AS InvoiceVolume,
+	--SUM(il.UnitPrice * il.Quantity) AS BilledAmount
+--FROM
+	--Invoice i JOIN Customer c ON i.CustomerId = c.CustomerId 
+		--JOIN InvoiceLine il ON i.InvoiceId = il.InvoiceId 
+--WHERE 
+	--CustomerName = 'Mark Philips'
+--GROUP BY
+	--CustID
+--ORDER BY
+	--CustID ASC;
+
+----SELECT 
+	----c.FirstName ||' '|| c.LastName AS CustomerName,
+	----i.InvoiceId AS InvoiceNumber,
+	----il.UnitPrice AS TrackPrice,
+	----il.Quantity AS Quantity,
+	----il.UnitPrice * il.Quantity AS BilledAmount,
+	----SUM(il.UnitPrice * il.Quantity) AS InvoiceAmount 
+----FROM 
+	----Invoice i JOIN Customer c ON i.CustomerId = c.CustomerId 
+	----JOIN InvoiceLine il ON i.InvoiceId = il.InvoiceId 
+--WHERE 
+	--CustomerName = 'Helena Holý' --OR CustomerName = 'Richard Cunningham' OR CustomerName = 'Luis Rojas'
+		--AND InvoiceNumber IN (46,175,198,220,272,393,404)
+----GROUP BY 
+	----CustomerName
+	--InvoiceNumber;
+----ORDER BY 
+	--InvoiceNumber ASC;
+	----InvoiceAmount DESC
+----LIMIT 3;
+----------------------------------------------------------
+--Q2--Who are the top 3 customers with the most purchases?
+----------------------------------------------------------
+
+---SELECT 
+	---i.CustomerID AS CustID,
+	---c.FirstName ||' '|| c.LastName AS CustomerName,
+	---COUNT(InvoiceId) AS InvoiceVolume
+---FROM
+	---Invoice i JOIN Customer c ON i.CustomerId = c.CustomerId 
+---GROUP BY
+	---CustID
+---ORDER BY
+	---CustID ASC;
+
+------SELECT 
+	------c.FirstName ||' '|| c.LastName AS CustomerName,
+	------SUM(il.UnitPrice * il.Quantity) AS TotalPurchases
+------FROM 
+	------Invoice i JOIN Customer c ON i.CustomerId = c.CustomerId 
+	------JOIN InvoiceLine il ON i.InvoiceId = il.InvoiceId 
+------GROUP BY 
+------CustomerName
+------ORDER BY 
+	------TotalPurchases DESC
+------LIMIT 3;
+
+
+
+
+----------------------------------------------
+--Q3--Which customers haven't bought anything?
+----------------------------------------------
+
+---At this time, there does not appear to be any customers on file who have bought nothing
+------SELECT 
+	------i.CustomerID AS CustID,
+	------c.FirstName ||' '|| c.LastName AS CustomerName,
+	--i.Total AS InvoiceTotal
+	------COUNT(DISTINCT i.InvoiceId) AS InvoiceVolume,
+	------SUM(il.UnitPrice * il.Quantity) AS BilledAmount
+------FROM
+	------Invoice i FULL JOIN Customer c ON i.CustomerId = c.CustomerId 
+		------FULL JOIN InvoiceLine il ON i.InvoiceId = il.InvoiceId
+--WHERE 
+	--CustomerName = 'Helena Holý'
+------GROUP BY
+	------CustomerName
+------HAVING
+	------BilledAmount <=0
+	------OR BilledAmount ISNULL 
+------ORDER BY
+	------CustID ASC;
+
+--Final_Solution-------------------------------------------------------
+------SELECT 
+	------i.CustomerID AS CustID,
+	------c.FirstName ||' '|| c.LastName AS CustomerName,
+	------COUNT(DISTINCT i.InvoiceId) AS InvoiceVolume,
+	------SUM(il.UnitPrice * il.Quantity) AS BilledAmount
+------FROM
+	------Invoice i FULL JOIN Customer c ON i.CustomerId = c.CustomerId 
+		------FULL JOIN InvoiceLine il ON i.InvoiceId = il.InvoiceId
+------GROUP BY
+	------CustomerName
+------HAVING
+	------BilledAmount <=0 OR BilledAmount ISNULL 
+------ORDER BY
+	------CustID ASC;
+------------------------------------------------------------------------
+
+----------------------------------------------
+--Q4--Which customers haven't bought anything?
+----------------------------------------------
+
+--top 3 countries are USA with 523.06, Canada with 303.96 and France with 195.1--
+-------SELECT 
+	-------i.BillingCountry AS Country,
+	-------COUNT(DISTINCT i.InvoiceId) AS Invoice_Volume,
+	-------SUM(il.UnitPrice * il.Quantity) AS Total_Sales
+-------FROM 
+	-------Invoice i FULL JOIN InvoiceLine il ON i.InvoiceId = il.InvoiceId  
+-------GROUP BY
+	-------Country
+-------ORDER BY
+	-------Invoice_Volume DESC
+-------LIMIT 3;
+
+
+------------------------------------------------------------------------------------
+--Q5--In the top 2 countries with highest sale, sort by city from top to lowest sale
+------------------------------------------------------------------------------------
+
+------SELECT 
+	------i.BillingCountry AS Country,
+	------i.BillingCity AS City,
+	--COUNT(DISTINCT i.InvoiceId) AS Invoice_Volume,
+	------SUM(il.UnitPrice * il.Quantity) AS Total_Sales
+------FROM 
+	------Invoice i INNER JOIN InvoiceLine il ON i.InvoiceId = il.InvoiceId
+------WHERE 
+	------Country IN('USA','Canada','France')
+	------AND City IN('Mountain View','Paris','Fort Worth','Dijon','Montréal','Vancouver')
+------GROUP BY
+	------City
+------ORDER BY
+	------Country ASC
+	--Total_Sales DESC
+	--Total_Sales DESC;
+------LIMIT 15;
+
+--final version--
+------SELECT 
+	------i.BillingCountry AS Country,
+	------i.BillingCity AS City,
+	------SUM(il.UnitPrice * il.Quantity) AS Total_Sales
+------FROM 
+	------Invoice i INNER JOIN InvoiceLine il ON i.InvoiceId = il.InvoiceId
+------WHERE 
+	------Country IN('USA','Canada','France')
+	------AND City IN('Mountain View','Paris','Fort Worth','Dijon','Montréal','Vancouver')
+------GROUP BY
+	------City
+------ORDER BY
+	------Country ASC
+------LIMIT 15;
+
+
+----------------------------------------------------------
+--Q6--What are the top 3 countries with lowest or no sale?
+----------------------------------------------------------
+
+--SELECT 
+	--i.BillingCountry AS Country,
+	--SUM(il.UnitPrice * il.Quantity) AS Total_Sales
+--FROM
+	--Invoice i JOIN InvoiceLine il ON i.InvoiceId = il.InvoiceId
+--GROUP BY
+	--Country
+--HAVING 
+	--Total_Sales <=0
+--ORDER BY
+	--Total_Sales DESC;
+--LIMIT 15;
+
+
+
+--59 customers from 24 countries--
+------SELECT
+	------c.Country As Country,
+	------COUNT(c.Country) AS Country_Counts
+	------SUM(il.UnitPrice * il.Quantity) AS Sales_Total
+------FROM
+	------Invoice i FULL JOIN Customer c ON i.CustomerId = c.CustomerId 
+		--FULL OUTER JOIN InvoiceLine il ON i.InvoiceId = il.InvoiceLineId 
+------GROUP BY
+	------Country
+--HAVING 
+	--Country_Counts <= 1
+------ORDER BY
+	------Country_Counts DESC;
+
+--number of unique countries in Invoice table is 24--
+---SELECT 
+	---COUNT(DISTINCT i.BillingCountry) AS Country_Counts
+---FROM 
+	---Invoice i;
+
+--SELECT 
+	--c.FirstName ||' '|| c.LastName AS CustomerName,
+	--c.Country AS Country
+--FROM 
+	--Customer c;
+
+--SELECT
+	--c.FirstName ||' '|| c.LastName AS CustomerName,
+	--c.Country AS Country,
+	--i.BillingCountry AS Country_Billed
+--FROM 
+	--Invoice i FULL JOIN Customer c ON i.CustomerId =c.CustomerId;
+	
+----###Compare i.Total with il.UP * il.QTY values###---
+------------SELECT 
+	--i.InvoiceId AS Invoice_No,
+	------------i.BillingCountry AS Country,
+	------------COUNT(DISTINCT i.InvoiceId) AS Invoice_Cts,
+	--i.CustomerId AS CustID,
+	------------COUNT(DISTINCT i.CustomerId) AS Customer_Cts,
+	--COUNT(DISTINCT i.InvoiceId) AS Invoice_Counts,
+	------------SUM(il.UnitPrice * il.Quantity) AS Sales_Total,
+	------------SUM(i.Total) AS Aggregate_Total 
+------------FROM
+	------------Invoice i JOIN InvoiceLine il ON i.InvoiceId = il.InvoiceId 
+------------WHERE
+	--CustID IN(3);
+	------------Country IN('USA')
+	--InvoiceId ISNULL;
+------------GROUP BY
+	------------Country
+----HAVING 
+	----Customer_Cts < 2
+		----AND Sales_Total < 38.00
+------------ORDER BY
+	------------Sales_Total DESC;
+
+
+---final version showing 7 countries with lowest sales total---
+------SELECT 
+	------i.BillingCountry AS Country,
+	------COUNT(DISTINCT i.InvoiceId) AS Invoice_Cts,
+	------COUNT(DISTINCT i.CustomerId) AS Customer_Cts,
+	------SUM(il.UnitPrice * il.Quantity) AS Sales_Total,
+	------SUM(i.Total) AS Aggregate_Total 
+------FROM
+	------Invoice i JOIN InvoiceLine il ON i.InvoiceId = il.InvoiceId
+------GROUP BY
+	------Country
+------HAVING 
+	------Customer_Cts < 2
+		------AND Sales_Total < 38.00
+------ORDER BY
+	------Sales_Total DESC;
+
+---Testing Aggregates between i.Total and SUM(il.UnitPrice * il.Quantity) outputs---
+---SELECT 
+	---i.InvoiceId AS Invoice_No,
+	---i.BillingCountry AS Country,
+	------------COUNT(DISTINCT i.InvoiceId) AS Invoice_Cts,
+	---i.CustomerId AS CustID,
+	------------COUNT(DISTINCT i.CustomerId) AS Customer_Cts,
+	--COUNT(DISTINCT i.InvoiceId) AS Invoice_Counts,
+	---il.UnitPrice AS Track_Price,
+	---il.Quantity AS Purchase_Qty,
+	---il.UnitPrice * il.Quantity AS Order_Price,
+	---SUM(il.UnitPrice * il.Quantity) AS Invoice_Total_Revised,
+	---i.Total AS Invoice_Total 
+---FROM
+	---Invoice i JOIN InvoiceLine il ON i.InvoiceId = il.InvoiceId 
+---WHERE
+	--CustID IN(3);
+---Country IN('Argentina')
+	--AND Invoice_No IN(5)
+	--InvoiceId ISNULL;
+---GROUP BY
+	---Invoice_No
+----HAVING 
+	----Customer_Cts < 2
+		----AND Sales_Total < 38.00
+---ORDER BY
+	---Invoice_No ASC;
+
+--------------------------------------------------
+--Q8-- What is the most popular media type?
+--------------------------------------------------
+
+-----SELECT
+	-----c.CustomerId,
+	-----mt.Name AS File_Type,
+	-----il.InvoiceId,
+	-----il.InvoiceLineId,
+	-----il.TrackId,
+	-----il.UnitPrice,
+	-----il.Quantity
+	-----SUM(il.UnitPrice * il.Quantity) AS Sales_Total,
+	--COUNT(DISTINCT i.InvoiceId) AS Invoice_Cts
+	--COUNT(t.MediaTypeId) AS File_Type_Cts,
+	--SUM(i.Total) AS Total_Sales
+	--t.Name
+-----FROM 
+	-----MediaType mt INNER JOIN Track t ON mt.MediaTypeId = t.MediaTypeId 
+		-----INNER JOIN InvoiceLine il ON t.TrackId = il.TrackId 
+		-----INNER JOIN Invoice i ON il.InvoiceId = i.InvoiceId 
+		-----INNER JOIN Customer c ON i.CustomerId = c.CustomerId
+--WHERE 
+	--il.InvoiceId ISNULL
+--GROUP BY 
+	--il.InvoiceId;
+--ORDER BY 
+	--Total_Sales DESC 
+--LIMIT 10;
+
+--there are only 5 media file types--
+--1	MPEG audio file
+--2	Protected AAC audio file
+--3	Protected MPEG-4 video file
+--4	Purchased AAC audio file
+--5	AAC audio file
+
+--There appears to be 412 distinct invoices
+
+---SELECT DISTINCT 
+	---mt.MediaTypeId,
+	---mt.Name
+---FROM
+	---MediaType mt;
+
+-----------------------------------------------------------------------
+--------------------------
+--Final Solution Version--
+--------------------------
+
+--------------------SELECT
+	--------------------mt.Name AS File_Type,
+	--------------------COUNT(DISTINCT i.InvoiceId) AS Invoice_Cts,
+	--------------------COUNT(t.TrackId) AS Track_Volume,
+	--------------------SUM(i.Total) AS Total_Sales
+--------------------FROM 
+	--------------------MediaType mt JOIN Track t ON mt.MediaTypeId = t.MediaTypeId 
+		--------------------JOIN InvoiceLine il ON t.TrackId = il.TrackId 
+		--------------------JOIN Invoice i ON il.InvoiceId = i.InvoiceId 
+		--------------------JOIN Customer c ON i.CustomerId = c.CustomerId
+--------------------GROUP BY 
+	--------------------File_Type
+--------------------ORDER BY 
+	--------------------Total_Sales DESC;
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+
+--SELECT
+	--mt.Name AS File_Type,
+	--COUNT(DISTINCT t.TrackId) AS Trk_Cts
+--FROM 
+	--MediaType mt JOIN Track t ON mt.MediaTypeId = t.MediaTypeId
+--GROUP BY 
+	--File_Type
+--ORDER BY 
+	--Trk_Cts DESC;
+
+---SELECT 
+	---t.TrackId AS Track_No,
+	---mt.Name AS File_Type,
+	---mt.MediaTypeId,
+	---t.Name AS Track_Name
+	--COUNT(t.TrackId) AS Track_Volume
+---FROM
+	---MediaType mt JOIN Track t ON mt.MediaTypeId = t.MediaTypeId;
+		----JOIN InvoiceLine il ON t.TrackId = il.TrackId
+--WHERE 
+	--mt.MediaTypeId IN(1);
+----GROUP BY 
+	----File_Type
+----ORDER BY 
+	----Track_Volume DESC;
+
+
+---SELECT
+	---t.TrackId,
+	---t.Name AS Track_Name,
+	---t.MediaTypeId,
+	---mt.Name,
+	---il.InvoiceId,
+	---InvoiceLineId 
+---FROM
+	---Track t JOIN InvoiceLine il ON t.TrackId = il.TrackId
+		---JOIN MediaType mt ON t.MediaTypeId = mt.MediaTypeId;
+--------WHERE 
+	--------t.MediaTypeId = 1;
+--LIMIT 30;
+
+
+
+----------------------------------------------------------------------------------
+--Q12 - 'What track name has the longest name, and how many characters?'--
+----------------------------------------------------------------------------------
+
+------Final Solution----
+-------------------------------------
+--SELECT
+	--t.TrackId, 
+	--t.Name,
+	--LENGTH (t.Name) AS Name_LEN
+--FROM
+	--Track t
+--WHERE 
+	--Name_LEN >100
+--ORDER BY
+	--Name_LEN DESC;
+-------------------------------------
+
+
+-----------SELECT
+	-----------t.Name AS Track_name,
+	-----------MAX(LENGTH (t.Name)) AS Name_Length
+	--t.TrackId
+-----------FROM 
+	-----------Track t;
+--WHERE
+	--t.mediatypeid = 5;
+--ORDER BY 
+	--LENGTH (t.Name) DESC;
+
+
+
+
+
+
+
+----------------------------------------------------------------------------------------------------------------------------
+--Q11 - 'Which customer(s) that bought an item and you cannot call them via phone because you're missing this info.--
+--How can you contact them?'--
+----------------------------------------------------------------------------------------------------------------------------
+
+--There are 59 distinct customers, and only 1 (CustomerID = 45, Ladislav Kovacs has no number), and the only method of contact is email (ladislav_kovacs@apple.hu)--
+
+----SELECT
+	--COUNT(i.InvoiceId) AS Inv_Volume,
+	----i.InvoiceId AS Invoice_No,
+	----STRFTIME('%m/%d/%Y',i.InvoiceDate) AS Date,
+	--SUM(i.Total) AS Total_Sales,
+	----i.Total AS Invoice_Total,
+	----c.CustomerId AS CustID,
+	----c.FirstName ||' '||c.LastName AS FullName,
+	----c.Phone AS Phone,
+	----c.Email AS Email
+----FROM  
+	----Customer c RIGHT JOIN Invoice i ON c.CustomerId = i.CustomerId  
+----WHERE 
+	----Phone ISNULL --OR CustID = 45
+--GROUP BY 
+	--CustID
+----ORDER BY 
+	----Invoice_Total DESC;
+	--Total_Sales DESC;
+	--Invoice_No;
+	--c.CustomerId;
+--LIMIT 20;
+
+
+
+--SELECT 
+	--*
+--FROM 
+	--Invoice i 
+--WHERE 
+	--CustomerId = 45;
+
+-------------------------------------------------------------------
+--Final Solution--
+-------------------------------------------------------------------
+-----SELECT
+	-----c.CustomerId AS CustID,
+	-----c.FirstName ||' '||c.LastName AS FullName,
+	-----c.Phone AS Phone,
+	-----c.Email AS Email,
+	-----i.InvoiceId AS Invoice_No,
+	-----STRFTIME('%m/%d/%Y',i.InvoiceDate) AS Date,
+	-----i.Total AS Invoice_Total
+-----FROM  
+	-----Customer c RIGHT JOIN Invoice i ON c.CustomerId = i.CustomerId  
+-----WHERE 
+	-----Phone ISNULL
+-----ORDER BY 
+	-----Invoice_Total DESC;
+
+-------------------------------------------------------------------
+
+
+
+---------------------------------------------------------------------
+--Q10--What is the top selling movie, music, and/or tv shows?
+---------------------------------------------------------------------
+
+-- 25 unique genres; 
+
+
+---SELECT DISTINCT 
+	---g.Name AS Genre,
+	---g.GenreId AS Genre_ID
+---FROM
+	---Genre g
+---ORDER BY
+	---Genre ASC;
+
+------------------------------------
+---Total Sales grouped by genre---
+
+-----SELECT 
+	-----g.Name AS Genre,
+	--t.Name AS Name,
+	-----t.GenreId AS Genre_ID,
+	--il.UnitPrice AS Price,
+	--il.Quantity AS Quantity,
+	--il.InvoiceId AS Inv_Num,
+	-----COUNT(t.GenreId) AS Genre_Cts,
+	-----SUM(il.UnitPrice * il.Quantity) AS Total_Sales
+-----FROM 
+	-----Track t  JOIN Genre g ON t.GenreId = g.GenreId 
+		-----JOIN InvoiceLine il ON t.TrackId = il.TrackId
+--WHERE 
+	--Price ISNULL;
+-----GROUP BY 	
+	-----Genre
+	--Genre_ID
+-----ORDER BY
+	-----Total_Sales DESC;
+	--Genre_Cts DESC;
+
+
+------SELECT 
+	------g.Name AS Genre,
+	------t.Name AS Name,
+	------t.GenreId AS Genre_ID,
+	----il.UnitPrice * il.Quantity AS Purchase_Amount
+	--il.UnitPrice AS Price,
+	--il.Quantity AS Quantity,
+	--il.InvoiceId AS Inv_Num,
+	------COUNT(t.GenreId) AS Genre_Cts,
+	------SUM(il.UnitPrice * il.Quantity) AS Total_Sales
+------FROM 
+	------Track t  JOIN Genre g ON t.GenreId = g.GenreId 
+		------JOIN InvoiceLine il ON t.TrackId = il.TrackId
+------WHERE 
+	------Genre_ID IN(1,19,21)
+	--Price ISNULL;
+------GROUP BY
+	------t.Name
+	--Genre
+	--Genre_ID
+------HAVING 
+	------Genre_Cts >1
+------ORDER BY
+	------Total_Sales DESC
+------LIMIT 9;
+	--Total_Sales DESC;
+	--Genre_Cts DESC;
+
+---------------------------------------------------------------------------------------------------------------------------
+--Final_Solution--
+---------------------------------------------------------------------------------------------------------------------------
+
+-------SELECT 
+	-------g.Name AS Genre,
+	-------t.Name AS Track_Name,
+	-------COUNT(t.GenreId) AS Genre_Cts,
+	-------SUM(il.UnitPrice * il.Quantity) AS Total_Sales
+-------FROM 
+	-------Track t  JOIN Genre g ON t.GenreId = g.GenreId 
+		-------JOIN InvoiceLine il ON t.TrackId = il.TrackId
+-------WHERE 
+	-------t.GenreId IN(1,19,21)
+	-------AND Track_Name IN('Walkabout','The Fix','Pilot','How to Stop an Exploding Man','Sure Know Something','Eruption')
+-------GROUP BY
+	-------Track_Name
+-------HAVING 
+	-------Genre_Cts >1
+-------ORDER BY
+	-------Total_Sales DESC
+-------LIMIT 8;
+
+---------------------------------------------------------------------------------------------------------------------------
+
+
+-----------------------------------------------------------------------
+--Q9--Does every Track_ID have the same price?
+--If note, what are the price buckets?  How many tracks in each bucket?
+-----------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
