@@ -1,0 +1,212 @@
+----------------------------------------------------
+--Creating Descriptive Statistics in SQLite syntax--
+----------------------------------------------------
+
+--Step-1---create view that serves a foundational table/query
+
+---primary_query---
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+CREATE VIEW summary_stats01 AS		
+SELECT 
+	c.CustomerId acct_no, 
+	SUM(i.Total) total_spend,
+	POWER(SUM(i.Total)-(SELECT ROUND(AVG(total_spend),2) Avg_spend
+						FROM
+							(SELECT c.FirstName ||' '||c.LastName poc, c.CustomerId acct_no, SUM(i.Total) total_spend
+							FROM Invoice i JOIN Customer c ON i.CustomerId = c.CustomerId
+							GROUP BY 1,2
+							ORDER BY 3)),2) mean_sqd_diff
+FROM Invoice i JOIN Customer c ON i.CustomerId = c.CustomerId
+GROUP BY 1
+ORDER BY 2;
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--Step-2---program statistical algorithms to compute desired metrics from 'Step-1'
+
+SELECT 
+	ROUND(AVG(total_spend),2) Mean,
+	(SELECT total_spend 
+		FROM 		
+			(summary_stats01) 
+			LIMIT 1 
+			OFFSET FLOOR((SELECT COUNT(*) FROM Customer c2)*0.5)) AS Median,
+	(SELECT total_spend
+	FROM 
+		(SELECT total_spend AS Mode,MAX(counts) max_counts
+			FROM
+				(SELECT total_spend, COUNT(*) counts
+				FROM
+					(summary_stats01)
+		GROUP BY 1
+		ORDER BY 2 DESC))) AS Mode,
+	MAX(total_spend) Maximum,
+	MIN(total_spend) Minimum,
+	MAX(total_spend)-MIN(total_spend) AS Range,
+	ROUND(SUM(mean_sqd_diff)/(COUNT(*)-1),3) Variance,
+	ROUND(SQRT(SUM(mean_sqd_diff)/(COUNT(*)-1)),3) Std_Deviation,
+	(SELECT total_spend
+		FROM
+			(summary_stats01)
+			LIMIT 1 
+			OFFSET FLOOR((SELECT COUNT(*) FROM Customer c2)*0.25)) AS Quartile_1,
+	(SELECT total_spend
+		FROM
+			(summary_stats01)
+			LIMIT 1 
+			OFFSET FLOOR((SELECT COUNT(*) FROM Customer c2)*0.75)) AS Quartile_3,
+	(SELECT total_spend
+		FROM
+			(summary_stats01)
+			LIMIT 1 
+			OFFSET FLOOR((SELECT COUNT(*) FROM Customer c2)*0.75)) - (SELECT total_spend
+		FROM
+			(summary_stats01)
+			LIMIT 1 
+			OFFSET FLOOR((SELECT COUNT(*) FROM Customer c2)*0.25)) AS InterQuartile_Range,
+	ROUND(ROUND(SQRT(SUM(mean_sqd_diff)/(COUNT(*)-1)),3)/SQRT(COUNT(*)),5) AS Std_Error,
+	COUNT(*) AS Counts,
+	SUM(total_spend) AS Sum
+FROM summary_stats01;
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--Step-3---create CTE using three tables (the first two come from both Step-1 (summary_stats01) and Step-2 (descriptive_stats)) followed by 'row_summary_stats'
+--in order to pivot/tranpose data from a horizontal display to a vertical table output
+
+WITH RECURSIVE
+summary_stats01 AS (
+SELECT 
+	c.CustomerId acct_no, 
+	SUM(i.Total) total_spend,
+	POWER(SUM(i.Total)-(SELECT ROUND(AVG(total_spend),2) Avg_spend
+						FROM
+							(SELECT c.FirstName ||' '||c.LastName poc, c.CustomerId acct_no, SUM(i.Total) total_spend
+							FROM Invoice i JOIN Customer c ON i.CustomerId = c.CustomerId
+							GROUP BY 1,2
+							ORDER BY 3)),2) mean_sqd_diff
+FROM Invoice i JOIN Customer c ON i.CustomerId = c.CustomerId
+GROUP BY 1
+ORDER BY 2
+),
+descriptive_stats AS 
+(
+SELECT 
+	ROUND(AVG(total_spend),2) Mean,
+	(SELECT total_spend 
+		FROM 		
+			(summary_stats01) 
+			LIMIT 1 
+			OFFSET FLOOR((SELECT COUNT(*) FROM Customer c2)*0.5)) AS Median,
+	(SELECT total_spend
+	FROM 
+		(SELECT total_spend AS Mode,MAX(counts) max_counts
+			FROM
+				(SELECT total_spend, COUNT(*) counts
+				FROM
+					(summary_stats01)
+		GROUP BY 1
+		ORDER BY 2 DESC))) AS Mode,
+	MAX(total_spend) Maximum,
+	MIN(total_spend) Minimum,
+	MAX(total_spend)-MIN(total_spend) AS Range,
+	ROUND(SUM(mean_sqd_diff)/(COUNT(*)-1),3) Variance,
+	ROUND(SQRT(SUM(mean_sqd_diff)/(COUNT(*)-1)),3) Std_Deviation,
+	(SELECT total_spend
+		FROM
+			(summary_stats01)
+			LIMIT 1 
+			OFFSET FLOOR((SELECT COUNT(*) FROM Customer c2)*0.25)) AS Quartile_1,
+	(SELECT total_spend
+		FROM
+			(summary_stats01)
+			LIMIT 1 
+			OFFSET FLOOR((SELECT COUNT(*) FROM Customer c2)*0.75)) AS Quartile_3,
+	(SELECT total_spend
+		FROM
+			(summary_stats01)
+			LIMIT 1 
+			OFFSET FLOOR((SELECT COUNT(*) FROM Customer c2)*0.75)) - (SELECT total_spend
+		FROM
+			(summary_stats01)
+			LIMIT 1 
+			OFFSET FLOOR((SELECT COUNT(*) FROM Customer c2)*0.25)) AS InterQuartile_Range,
+	ROUND(ROUND(SQRT(SUM(mean_sqd_diff)/(COUNT(*)-1)),3)/SQRT(COUNT(*)),5) AS Std_Error,
+	COUNT(*) AS Counts,
+	SUM(total_spend) AS Sum
+FROM summary_stats01
+),
+row_summary_stats AS
+(
+	SELECT
+		1 AS cat,'Mean' AS Metric, Mean AS Value
+	FROM descriptive_stats
+UNION
+	SELECT
+		2, 'Median', Median
+	FROM descriptive_stats
+UNION
+	SELECT
+		3, 'Mode', Mode
+	FROM descriptive_stats
+UNION
+	SELECT
+		4, 'Max', Maximum
+	FROM descriptive_stats
+UNION
+	SELECT
+		5, 'Min', Minimum
+	FROM descriptive_stats
+UNION
+	SELECT
+		6, 'Range', Range
+	FROM descriptive_stats
+UNION
+	SELECT
+		7, 'Variance', Variance
+	FROM descriptive_stats
+UNION
+	SELECT
+		8, 'Std_Dev', Std_Deviation
+	FROM descriptive_stats	
+UNION
+	SELECT
+		9, 'Q1', Quartile_1
+	FROM descriptive_stats
+UNION
+	SELECT
+		10, 'Q3', Quartile_3
+	FROM descriptive_stats
+UNION
+	SELECT
+		10, 'IQR', InterQuartile_Range
+	FROM descriptive_stats
+UNION
+	SELECT
+		11, 'Std_Error', Std_Error
+	FROM descriptive_stats
+UNION
+	SELECT
+		11, 'Count', Counts
+	FROM descriptive_stats
+UNION
+	SELECT
+		12, 'Sum', Sum
+	FROM descriptive_stats
+)
+SELECT Metric, Value
+FROM row_summary_stats
+ORDER BY cat;
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--Step-4-(Optional)---create a second view labeled 'Customer_Stats' to run a static view of the CTE output result
+
+CREATE VIEW Customer_Stats AS
+	(import script from Step-3) excluding parenthesis
+
+Once view is created, one can run the following script to pull the new view:
+
+SELECT *
+FROM Customer_Stats;
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+---End-Of-Line---
